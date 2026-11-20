@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>CasomGram</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#f3f1ee;--panel:#fff;--ink:#1d1b20;--muted:#7a7680;--line:#e6e2dd;--acc:#7c3aed;--acc2:#a855f7;--out:#ede4ff;--in:#fff;--chat:#ece8f3;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#14121a;--panel:#1c1925;--ink:#ece9f2;--muted:#8d879a;--line:#2b2736;--out:#4c2a8a;--in:#272333;--chat:#161320}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#14121a;--panel:#1c1925;--ink:#ece9f2;--muted:#8d879a;--line:#2b2736;--out:#4c2a8a;--in:#272333;--chat:#161320}
+html,body{height:100%;margin:0}*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.4 "Manrope","Segoe UI",system-ui,sans-serif}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit;color:var(--ink)}
+.hide{display:none!important}
+.auth{height:100%;display:grid;place-items:center;padding:20px}
+.card{width:100%;max-width:340px;background:var(--panel);border-radius:20px;padding:26px;display:flex;flex-direction:column;gap:12px;text-align:center}
+.card input{border:1px solid var(--line);background:var(--bg);border-radius:12px;padding:12px 14px;outline:none}
+.logo{width:56px;height:56px;border-radius:16px;margin:0 auto;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;display:grid;place-items:center;font-weight:800;font-size:26px}
+.pri{background:var(--acc);color:#fff;border-radius:12px;padding:12px;font-weight:700}
+.sec{color:var(--acc)}
+.err{color:#e11d48;font-size:13px;min-height:18px}
+.app{display:flex;height:100%;max-width:1100px;margin:0 auto;background:var(--panel);overflow:hidden}
+.side{width:340px;border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0}
+.top{display:flex;align-items:center;gap:10px;padding:12px}
+.top .logo{width:34px;height:34px;border-radius:10px;font-size:16px;margin:0}
+.top input{flex:1;min-width:0;border:0;border-radius:20px;background:var(--bg);padding:9px 14px;outline:none}
+.ib{width:34px;height:34px;border-radius:50%;font-size:17px}.ib:hover{background:var(--bg)}
+.list{overflow:auto;flex:1}
+.ch{display:flex;gap:12px;padding:10px 12px;cursor:pointer;align-items:center}
+.ch:hover,.ch.on{background:var(--bg)}
+.av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;flex-shrink:0}
+.ch b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bd{background:var(--acc);color:#fff;border-radius:10px;padding:0 7px;font-size:12px}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--chat)}
+.hd{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.hd .av{width:40px;height:40px}.back{display:none}
+.msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:6px}
+.b{max-width:75%;padding:8px 12px;border-radius:16px;background:var(--in);word-wrap:break-word;white-space:pre-wrap}
+.b.o{align-self:flex-end;background:var(--out);border-bottom-right-radius:4px}
+.b.i{align-self:flex-start;border-bottom-left-radius:4px}
+.b u{display:block;text-decoration:none;font-size:12px;font-weight:700;color:var(--acc);margin-bottom:2px}
+.b i{display:block;text-align:right;font-size:11px;color:var(--muted);font-style:normal;margin-top:2px}
+.empty{margin:auto;color:var(--muted)}
+.bar{display:flex;gap:8px;padding:10px;background:var(--panel);border-top:1px solid var(--line)}
+.bar input{flex:1;min-width:0;border:0;background:var(--bg);border-radius:22px;padding:11px 16px;outline:none}
+.send{width:44px;height:44px;border-radius:50%;background:var(--acc);color:#fff;font-size:18px}
+@media(max-width:700px){.side{width:100%;border:0}.main{display:none}.app.chat .side{display:none}.app.chat .main{display:flex}.back{display:block}}
+</style>
+</head>
+<body>
+
+<div class="auth" id="auth">
+<div class="card">
+<div class="logo">C</div><h2 style="margin:0">CasomGram</h2>
+<input id="un" placeholder="Имя пользователя" autocomplete="username" autocapitalize="none">
+<input id="pw" type="password" placeholder="Пароль (от 6 символов)" autocomplete="current-password">
+<div class="err" id="err"></div>
+<button class="pri" id="login">Войти</button>
+<button class="sec" id="reg">Создать аккаунт</button>
+</div>
+</div>
+
+<div class="app hide" id="app">
+<aside class="side">
+<div class="top"><div class="logo">C</div><input id="q" placeholder="Поиск"><button class="ib" id="th" title="Тема">◐</button><button class="ib" id="out" title="Выйти">⎋</button></div>
+<div class="list" id="list"></div>
+</aside>
+<section class="main">
+<div class="hd"><button class="ib back" id="bk">←</button><div class="av" id="hav"></div><b id="hn"></b></div>
+<div class="msgs" id="msgs"><div class="empty">Выберите чат, чтобы начать общение</div></div>
+<div class="bar"><input id="in" placeholder="Сообщение" autocomplete="off" maxlength="4000"><button class="send" id="sd">➤</button></div>
+</section>
+</div>
+
+<script>
+// ВСТАВЬ СВОИ ДАННЫЕ из Supabase: Project Settings → API
+const SUPABASE_URL = "ВСТАВЬ_PROJECT_URL";
+const SUPABASE_KEY = "ВСТАВЬ_ANON_PUBLIC_KEY";
+
+const $ = s => document.getElementById(s);
+const esc = s => s.replace(/[&<>]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+const time = d => new Date(d).toLocaleTimeString("ru", {hour:"2-digit", minute:"2-digit"});
+const colors = ["#7c3aed","#e11d74","#0ea5a4","#f59e0b","#3b82f6","#16a34a","#dc2626"];
+const colorOf = s => colors[[...s].reduce((a,c)=>a+c.charCodeAt(0),0) % colors.length];
+const ALL = {id:"all", username:"Общий чат"};
+
+let sb, me, users = {}, cur = null, unread = {}, shown = new Set();
+
+if (SUPABASE_URL.startsWith("ВСТАВЬ")) {
+  $("err").textContent = "Сначала вставь ключи Supabase в код.";
+} else {
+  sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  sb.auth.getSession().then(({data}) => { if (data.session) boot(data.session.user); });
+}
+
+const mail = n => n.trim().toLowerCase() + "@casomgram.app";
+const validName = n => /^[a-zA-Z0-9_]{3,20}$/.test(n.trim());
+
+$("reg").onclick = async () => {
+  if (!sb) return;
+  const n = $("un").value, p = $("pw").value;
+  if (!validName(n)) return $("err").textContent = "Имя: 3–20 символов, латиница, цифры, _";
+  const {data, error} = await sb.auth.signUp({email: mail(n), password: p});
+  if (error) return $("err").textContent = error.message;
+  if (!data.session) return $("err").textContent = "Отключи «Confirm email» в настройках Supabase.";
+  const {error: e2} = await sb.from("profiles").insert({id: data.user.id, username: n.trim()});
+  if (e2) return $("err").textContent = "Имя занято или ошибка базы.";
+  boot(data.user);
+};
+$("login").onclick = async () => {
+  if (!sb) return;
+  const {data, error} = await sb.auth.signInWithPassword({email: mail($("un").value), password: $("pw").value});
+  if (error) return $("err").textContent = "Неверное имя или пароль.";
+  boot(data.user);
+};
+$("out").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+async function boot(user) {
+  const {data: ps} = await sb.from("profiles").select("*");
+  (ps || []).forEach(p => users[p.id] = p);
+  me = users[user.id];
+  if (!me) { await sb.auth.signOut(); return $("err").textContent = "Профиль не найден. Создай аккаунт заново."; }
+  $("auth").classList.add("hide"); $("app").classList.remove("hide");
+  drawList();
+  sb.channel("cg")
+    .on("postgres_changes", {event:"INSERT", schema:"public", table:"messages"}, p => incoming(p.new))
+    .on("postgres_changes", {event:"INSERT", schema:"public", table:"profiles"}, p => { users[p.new.id] = p.new; drawList(); })
+    .subscribe();
+}
+
+function key(m) { return m.receiver === null ? "all" : (m.sender === me.id ? m.receiver : m.sender); }
+
+function incoming(m) {
+  if (shown.has(m.id)) return;
+  const k = key(m);
+  if (cur && cur.id === k) { addMsg(m); }
+  else if (m.sender !== me.id) { unread[k] = (unread[k] || 0) + 1; drawList(); }
+}
+
+function drawList() {
+  const f = $("q").value.toLowerCase();
+  const all = [ALL, ...Object.values(users).filter(u => u.id !== me.id)];
+  $("list").innerHTML = all.filter(u => u.username.toLowerCase().includes(f)).map(u =>
+    `<div class="ch ${cur && cur.id === u.id ? "on" : ""}" data-id="${u.id}">
+      <div class="av" style="background:${colorOf(u.username)}">${esc(u.username[0].toUpperCase())}</div>
+      <b>${esc(u.username)}</b>${unread[u.id] ? `<span class="bd">${unread[u.id]}</span>` : ""}</div>`).join("");
+}
+
+async function openChat(id) {
+  cur = id === "all" ? ALL : users[id]; unread[id] = 0; shown.clear();
+  $("hav").style.background = colorOf(cur.username); $("hav").textContent = cur.username[0].toUpperCase();
+  $("hn").textContent = cur.username; $("app").classList.add("chat");
+  $("msgs").innerHTML = ""; drawList();
+  let q = sb.from("messages").select("*").order("created_at", {ascending:true}).limit(200);
+  q = id === "all" ? q.is("receiver", null)
+    : q.or(`and(sender.eq.${me.id},receiver.eq.${id}),and(sender.eq.${id},receiver.eq.${me.id})`);
+  const {data} = await q;
+  (data || []).forEach(addMsg);
+  if (!data || !data.length) $("msgs").innerHTML = '<div class="empty">Сообщений пока нет. Напиши первым!</div>';
+}
+
+function addMsg(m) {
+  if (shown.has(m.id)) return;
+  shown.add(m.id);
+  const e = $("msgs").querySelector(".empty"); if (e) e.remove();
+  const mine = m.sender === me.id;
+  const who = cur.id === "all" && !mine ? `<u>${esc((users[m.sender] || {username:"?"}).username)}</u>` : "";
+  $("msgs").insertAdjacentHTML("beforeend", `<div class="b ${mine ? "o" : "i"}">${who}${esc(m.body)}<i>${time(m.created_at)}</i></div>`);
+  $("msgs").scrollTop = 1e9;
+}
+
+async function send() {
+  const v = $("in").value.trim(); if (!v || !cur) return;
+  $("in").value = "";
+  const {data, error} = await sb.from("messages")
+    .insert({body: v, receiver: cur.id === "all" ? null : cur.id}).select().single();
+  if (error) { $("in").value = v; return alert("Не отправилось: " + error.message); }
+  addMsg(data);
+}
+
+$("list").onclick = e => { const x = e.target.closest(".ch"); if (x) openChat(x.dataset.id); };
+$("sd").onclick = send; $("in").onkeydown = e => { if (e.key === "Enter") send(); };
+$("q").oninput = () => me && drawList();
+$("bk").onclick = () => { $("app").classList.remove("chat"); cur = null; drawList(); };
+$("th").onclick = () => {
+  const r = document.documentElement;
+  const d = r.dataset.theme === "dark" || (!r.dataset.theme && matchMedia("(prefers-color-scheme:dark)").matches);
+  r.dataset.theme = d ? "light" : "dark";
+};
+</script>
+</body>
+</html>
